@@ -31,4 +31,4 @@ npm run dev
 
 ---
 
-문의: silver@yourdomain.com 
+문의: AM1팀 권은 (eun.kwon@cj.net)
