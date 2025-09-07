@@ -1,0 +1,104 @@
+/* AI 화면 분석 페이지 스타일 */
+.screen-analysis-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.analysis-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.back-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.analysis-header h1 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.analysis-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.development-message {
+  text-align: center;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 3rem 2rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.development-message h2 {
+  margin: 0 0 1rem 0;
+  font-size: 2.5rem;
+  font-weight: 600;
+}
+
+.development-message p {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .analysis-header {
+    padding: 1rem;
+  }
+
+  .analysis-content {
+    padding: 1rem;
+  }
+
+  .development-message {
+    padding: 2rem 1rem;
+  }
+
+  .development-message h2 {
+    font-size: 2rem;
+  }
+
+  .development-message p {
+    font-size: 1rem;
+  }
+}

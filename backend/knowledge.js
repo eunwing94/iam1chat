@@ -10,9 +10,11 @@ const { createHistoryAwareRetriever } = require("langchain/chains/history_aware_
 const { MessagesPlaceholder } = require("@langchain/core/prompts");
 const { ChatPromptTemplate } = require("@langchain/core/prompts");
 const { createStuffDocumentsChain } = require("langchain/chains/combine_documents");
+const { calculateConfidence } = require('./confidence.js');
 
 let retrievalChain;
 let chatHistory = [];
+let isRetraining = false;
 
 async function initializeKnowledgeBase() {
   try {
@@ -78,24 +80,87 @@ async function initializeKnowledgeBase() {
 
 async function getAnswer(question) {
   if (!retrievalChain) {
-    return "문서가 아직 학습되지 않았습니다. manuals 폴더에 문서를 추가하고 서버를 재시작하세요.";
+    return {
+      answer: "문서가 아직 학습되지 않았습니다. manuals 폴더에 문서를 추가하고 서버를 재시작하세요.",
+      confidence: 0,
+      sources: []
+    };
   }
   try {
     const response = await retrievalChain.invoke({
       chat_history: chatHistory,
       input: question,
     });
+    
+    // 신뢰도 계산
+    const confidence = calculateConfidence(response, question);
+    
+    // 소스 문서 정보 추출
+    const sources = extractSources(response);
+    
     chatHistory.push({ role: 'user', content: question });
     chatHistory.push({ role: 'assistant', content: response.answer });
     // Keep chat history to a reasonable size
     if (chatHistory.length > 10) {
       chatHistory = chatHistory.slice(-10);
     }
-    return response.answer;
+    
+    return {
+      answer: response.answer,
+      confidence: confidence,
+      sources: sources
+    };
   } catch (error) {
     console.error("🚨 답변 생성 중 에러 발생:", error);
-    return "답변을 생성하는 중 오류가 발생했습니다.";
+    return {
+      answer: "답변을 생성하는 중 오류가 발생했습니다.",
+      confidence: 0,
+      sources: []
+    };
   }
 }
 
-module.exports = { initializeKnowledgeBase, getAnswer }; 
+// 소스 문서 정보 추출 함수
+function extractSources(response) {
+  if (!response.context || response.context.length === 0) {
+    return [];
+  }
+  
+  return response.context.map((doc, index) => ({
+    id: index + 1,
+    source: doc.metadata?.source || "알 수 없는 소스",
+    content: doc.pageContent?.substring(0, 200) + "..." || "",
+    relevance: "관련 문서"
+  }));
+}
+
+// RAG 재학습 함수
+async function retrainRAG() {
+  if (isRetraining) {
+    console.log('🔄 RAG 재학습이 이미 진행 중입니다...');
+    return;
+  }
+
+  isRetraining = true;
+  console.log('🔄 RAG 재학습을 시작합니다...');
+
+  try {
+    // 기존 retrievalChain 초기화
+    retrievalChain = null;
+    
+    // 새로운 지식 베이스 초기화
+    await initializeKnowledgeBase();
+    
+    console.log('✅ RAG 재학습이 완료되었습니다!');
+  } catch (error) {
+    console.error('❌ RAG 재학습 실패:', error);
+  } finally {
+    isRetraining = false;
+  }
+}
+
+module.exports = { 
+  initializeKnowledgeBase, 
+  getAnswer, 
+  retrainRAG 
+};
