@@ -2,8 +2,8 @@
 
 silverchat은 AI 챗봇 웹사이트입니다. 프론트엔드는 React, 백엔드는 Express와 OpenAI API를 사용합니다.
 
-##### 1차 개발내역 #######
-개발내역과 관련 파일 참고
+## 개발내역
+### 1차 개발내역과 관련 파일 참고
 1. 문의내역 히스토리 관리 [ChatManagement.jsx]
 2. 질문에 대한 신뢰도 계산 [confidence.js] =>>>> 신뢰도 계산로직 보완필요합니다 ㅠㅠ
 4. 신뢰도 60% 이하인 답변들에 대해서 Teams 채널 알림 [teams-notification.js]
