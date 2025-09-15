@@ -1,0 +1,268 @@
+body, #root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fila-white);
+  margin: 0;
+  padding: 0;
+}
+
+/* FILA 시그니처 컬러 */
+:root {
+  --fila-red: #e31c24;
+  --fila-navy: #00205b;
+  --fila-white: #fff;
+}
+
+.fila-theme {
+  background: var(--fila-white);
+}
+
+.fila-header {
+  background: var(--fila-navy);
+  color: var(--fila-white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  border-radius: 12px 12px 0 0;
+  position: relative;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-right {
+  position: relative;
+}
+
+.fila-logo {
+  height: 36px;
+  width: auto;
+  background: var(--fila-white);
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+
+.fila-title {
+  font-size: 1.7rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--fila-white);
+}
+
+.chat-container {
+  max-width: 480px;
+  margin: 40px auto;
+  border: 2px solid var(--fila-navy);
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  background: var(--fila-white);
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f7f7fa;
+}
+
+.chat-message {
+  padding: 12px 16px;
+  border-radius: 16px;
+  max-width: 80%;
+  word-break: break-word;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #222;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+  background: var(--fila-red);
+  color: var(--fila-white);
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 16px;
+  border-top-right-radius: 16px;
+  border-top-left-radius: 16px;
+  box-shadow: 0 2px 8px rgba(227,28,36,0.08);
+}
+
+.chat-message.assistant {
+  align-self: flex-start;
+  background: var(--fila-navy);
+  color: var(--fila-white);
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 16px;
+  border-top-right-radius: 16px;
+  border-top-left-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,32,91,0.08);
+}
+
+.chat-input-area {
+  display: flex;
+  padding: 16px;
+  border-top: 2px solid var(--fila-navy);
+  background: #fafbfc;
+  border-radius: 0 0 12px 12px;
+}
+
+.fila-input-area {
+  background: var(--fila-white);
+}
+
+.chat-input, .fila-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid var(--fila-navy);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  margin-right: 8px;
+  background: var(--fila-white);
+  color: var(--fila-navy);
+  font-weight: 500;
+}
+
+.send-btn, .fila-btn {
+  background: var(--fila-red);
+  color: var(--fila-white);
+  border: none;
+  border-radius: 8px;
+  padding: 0 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(227,28,36,0.08);
+}
+
+.send-btn:disabled, .fila-btn:disabled {
+  background: #f7bfc2;
+  cursor: not-allowed;
+}
+
+/* 신뢰도 표시 스타일 */
+.confidence-info {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.confidence-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  min-width: 120px;
+}
+
+.confidence-very-high {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.confidence-high {
+  background: #cce5ff;
+  color: #004085;
+  border: 1px solid #b3d7ff;
+}
+
+.confidence-medium {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.confidence-low {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.confidence-very-low {
+  background: #f5c6cb;
+  color: #721c24;
+  border: 1px solid #f1b0b7;
+}
+
+.sources-info {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
+.message-content {
+  margin-bottom: 0;
+}
+
+/* 햄버거 메뉴 스타일 */
+.hamburger-menu {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.hamburger-menu:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.hamburger-menu span {
+  width: 20px;
+  height: 2px;
+  background-color: var(--fila-white);
+  transition: all 0.3s;
+  border-radius: 1px;
+}
+
+/* 드롭다운 메뉴 */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--fila-white);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 180px;
+  margin-top: 8px;
+}
+
+.menu-item {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--fila-navy);
+  transition: background-color 0.2s;
+  border-radius: 8px;
+}
+
+.menu-item:hover {
+  background-color: #f5f5f5;
+}
+
