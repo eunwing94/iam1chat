@@ -204,9 +204,7 @@ function setupOCRRoutes(app) {
           
           responseText = `에러 이미지를 분석한 결과, 다음과 같은 원인을 예상할 수 있습니다:
 
-${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}
-
-자세한 해결 방법을 원하시면 추가 정보를 제공해주세요.`;
+${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}`;
         } else {
           // 70% 미만인 경우 ChatGPT 답변
           console.log('유사도가 70% 미만이므로 ChatGPT 분석을 진행합니다.');
