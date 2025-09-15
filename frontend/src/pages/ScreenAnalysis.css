@@ -1,104 +1,235 @@
-/* AI 화면 분석 페이지 스타일 */
+/* FILA 시그니처 컬러 */
+:root {
+  --fila-red: #e31c24;
+  --fila-navy: #00205b;
+  --fila-white: #fff;
+}
+
 .screen-analysis-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.analysis-header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 1rem 2rem;
+  max-width: 480px;
+  margin: 40px auto;
+  border: 2px solid var(--fila-navy);
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.09);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  flex-direction: column;
+  height: 80vh;
+  background: var(--fila-white);
 }
 
-.header-left {
+.screen-analysis-header {
+  background: var(--fila-navy);
+  color: var(--fila-white);
+  padding: 18px;
+  border-radius: 12px 12px 0 0;
+}
+
+.header-content {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 16px;
 }
 
+/* 뒤로가기 버튼 스타일 */
 .back-btn {
-  background: #6c757d;
-  color: white;
+  background: var(--fila-red);
+  color: var(--fila-white);
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
 }
 
 .back-btn:hover {
-  background: #5a6268;
+  background: #c41e3a;
   transform: translateY(-1px);
 }
 
-.analysis-header h1 {
+.screen-analysis-header h1 {
   margin: 0;
-  color: #333;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 600;
 }
 
-.analysis-content {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+/* 환영 메시지 - Mr.FILA 화면 크기에 맞춤 */
+.welcome-message {
+  text-align: left;
+  color: var(--fila-navy);
+  padding: 1rem;
+  background: rgba(0, 32, 91, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 32, 91, 0.1);
+  margin: 0.5rem 0;
+}
+
+.welcome-message h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  color: var(--fila-navy);
+  font-weight: 600;
+}
+
+.welcome-message p {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #666;
+}
+
+/* 메시지 이미지 스타일 - Mr.FILA 화면 크기에 맞춤 */
+.message-image {
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.message-image img {
+  max-width: 150px;
+  max-height: 150px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  object-fit: cover;
+}
+
+/* 메시지 시간 스타일 */
+.message-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-top: 4px;
+  display: block;
+}
+
+/* 이미지 미리보기 컨테이너 - Mr.FILA 화면 크기에 맞춤 */
+.image-preview-container {
+  margin-bottom: 8px;
+  padding: 6px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.image-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview img {
+  max-width: 80px;
+  max-height: 80px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--fila-red);
+  color: var(--fila-white);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.development-message {
-  text-align: center;
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  padding: 3rem 2rem;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+.remove-image-btn:hover {
+  background: #c41e3a;
+  transform: scale(1.1);
 }
 
-.development-message h2 {
-  margin: 0 0 1rem 0;
-  font-size: 2.5rem;
-  font-weight: 600;
+/* 입력 영역 래퍼 */
+.input-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  width: 100%;
+  align-items: flex-end;
 }
 
-.development-message p {
-  margin: 0;
+/* 텍스트 영역 스타일 - Mr.FILA 화면 크기에 맞춤 */
+.message-textarea {
+  flex: 1;
+  resize: vertical;
+  min-height: 40px;
+  height: 40px;
+  font-family: inherit;
+  line-height: 1.2;
+  font-size: 1rem;
+  padding: 8px 14px;
+  border: 1.5px solid var(--fila-navy);
+  border-radius: 8px;
+  outline: none;
+  background: var(--fila-white);
+  color: var(--fila-navy);
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+/* 입력 액션 버튼들 */
+.input-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+/* ScreenAnalysis 전용 이미지 첨부 버튼 */
+.screen-analysis-container .image-upload-btn {
+  background: var(--fila-navy);
+  color: var(--fila-white);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
   font-size: 1.2rem;
-  opacity: 0.9;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 40px;
+  height: 40px;
+  box-sizing: border-box;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-  .analysis-header {
-    padding: 1rem;
-  }
-
-  .analysis-content {
-    padding: 1rem;
-  }
-
-  .development-message {
-    padding: 2rem 1rem;
-  }
-
-  .development-message h2 {
-    font-size: 2rem;
-  }
-
-  .development-message p {
-    font-size: 1rem;
-  }
+.screen-analysis-container .image-upload-btn:hover {
+  background: #001a4d;
+  transform: translateY(-1px);
 }
+
+/* 전송 버튼 높이 맞춤 */
+/* ScreenAnalysis 전용 전송 버튼 스타일 */
+.screen-analysis-container .fila-btn {
+  height: 40px !important;
+  padding: 0 20px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+
+/* ScreenAnalysis 전용 입력 영역 */
+.screen-analysis-container .chat-input-area {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-top: 2px solid var(--fila-navy);
+  background: #fafbfc;
+  border-radius: 0 0 12px 12px;
+}
+

@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { initializeKnowledgeBase, getAnswer } = require('./knowledge.js');
 const { sendLowConfidenceNotification, isLowConfidence } = require('./teams-notification.js');
+const { setupOCRRoutes } = require('./screen_analysis.js');
 const database = require('./database.js');
 
 const app = express();
@@ -17,6 +18,9 @@ async function initializeServer() {
     
     // 문서 학습 초기화
     initializeKnowledgeBase();
+    
+    // OCR 라우트 설정
+    setupOCRRoutes(app);
     
     console.log('🚀 서버 초기화 완료');
   } catch (error) {

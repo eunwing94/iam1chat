@@ -20,8 +20,11 @@
     "express": "^5.1.0",
     "langchain": "^0.3.30",
     "mammoth": "^1.9.1",
-    "openai": "^5.10.1",
+    "multer": "^2.0.2",
+    "openai": "^5.20.2",
     "pdf-parse": "^1.1.1",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "string-similarity": "^4.0.4",
+    "tesseract.js": "^6.0.1"
   }
 }
