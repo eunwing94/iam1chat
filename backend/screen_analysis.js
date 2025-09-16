@@ -15,7 +15,7 @@ const openai = new OpenAI({
 });
 
 // OCR 결과를 파일에 저장하는 함수
-function saveOCRResult(ocrText) {
+function saveOCRResult(ocrText, userText = '') {
   const ocrFilePath = path.join(__dirname, 'files', 'ocr_list.txt');
   const separator = '-----------------------------------------';
   const timestamp = new Date().toISOString();
@@ -31,7 +31,13 @@ function saveOCRResult(ocrText) {
     content = ocrText.replace(/Time:\s*[^\n\r]+/i, '').trim();
   }
   
-  const formattedContent = `\n${separator}\n문의일시 : ${timestamp}\n내용 : ${content}\n에러일시 : ${errorTime}\n`;
+  // 사용자 입력 텍스트가 있으면 추가
+  let userInputText = '';
+  if (userText && userText.trim()) {
+    userInputText = `사용자입력 : ${userText.trim()}\n`;
+  }
+  
+  const formattedContent = `\n${separator}\n문의일시 : ${timestamp}\n내용 : ${content}\n${userInputText}에러일시 : ${errorTime}\n`;
   
   try {
     // 파일이 없으면 생성, 있으면 추가
@@ -39,6 +45,23 @@ function saveOCRResult(ocrText) {
     console.log('OCR 결과가 ocr_list.txt에 저장되었습니다.');
   } catch (error) {
     console.error('OCR 결과 저장 실패:', error);
+  }
+}
+
+// 텍스트 입력 결과를 ocr_list.txt에 저장하는 함수
+function saveTextResult(userText) {
+  const ocrFilePath = path.join(__dirname, 'files', 'ocr_list.txt');
+  const separator = '-----------------------------------------';
+  const timestamp = new Date().toISOString();
+  
+  const formattedContent = `\n${separator}\n문의일시 : ${timestamp}\n내용 : \n사용자입력 : ${userText.trim()}\n에러일시 : \n`;
+  
+  try {
+    // 파일이 없으면 생성, 있으면 추가
+    fs.appendFileSync(ocrFilePath, formattedContent, 'utf8');
+    console.log('텍스트 입력 결과가 ocr_list.txt에 저장되었습니다.');
+  } catch (error) {
+    console.error('텍스트 결과 저장 실패:', error);
   }
 }
 
@@ -166,12 +189,15 @@ function setupOCRRoutes(app) {
         });
       }
 
+      // 사용자 입력 텍스트 받기
+      const userText = req.body.userText || '';
+
       console.log('OCR 처리 시작...');
       const ocrText = await processOCR(req.file.buffer);
       
       if (ocrText && ocrText.trim().length > 0) {
-        // OCR 결과를 파일에 저장
-        saveOCRResult(ocrText);
+        // OCR 결과를 파일에 저장 (사용자 입력 텍스트 포함)
+        saveOCRResult(ocrText, userText);
         
         // OCR 텍스트에서 Time: 부분을 제거한 내용 추출
         const timeMatch = ocrText.match(/Time:\s*([^\n\r]+)/i);
@@ -242,6 +268,77 @@ ${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}`;
       res.status(500).json({
         success: false,
         error: 'OCR 처리 중 오류가 발생했습니다.'
+      });
+    }
+  });
+
+  // 텍스트 분석 엔드포인트
+  app.post('/api/analyze-text', async (req, res) => {
+    try {
+      const { text } = req.body;
+      
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: '분석할 텍스트가 필요합니다.' 
+        });
+      }
+
+      console.log('텍스트 분석 시작...');
+      
+      // 텍스트 입력 결과를 ocr_list.txt에 저장
+      saveTextResult(text);
+      
+      // 가이드와 유사도 분석
+      const analysis = analyzeErrorWithGuide(text);
+      console.log(`유사도 분석 결과: ${(analysis.similarity * 100).toFixed(2)}%`);
+      if (analysis.match) {
+        console.log(`매칭된 가이드: ${analysis.match.title}`);
+      }
+      
+      let responseText = '';
+      
+      if (analysis.similarity >= 0.7 && analysis.match) {
+        // 70% 이상 유사한 경우 가이드에서 답변
+        let causeText = '';
+        let solutionText = '';
+        
+        if (analysis.match.cause && analysis.match.cause.trim()) {
+          causeText = `예상 원인 : ${analysis.match.cause}`;
+        }
+        
+        if (analysis.match.solution && analysis.match.solution.trim()) {
+          solutionText = `해결방법: ${analysis.match.solution}`;
+        }
+        
+        responseText = `에러 내용을 분석한 결과, 다음과 같은 원인을 예상할 수 있습니다:
+
+${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}
+
+자세한 해결 방법을 원하시면 추가 정보를 제공해주세요.`;
+      } else {
+        // 70% 미만인 경우 ChatGPT 답변
+        console.log('유사도가 70% 미만이므로 ChatGPT 분석을 진행합니다.');
+        const chatGPTResponse = await getChatGPTResponse(text);
+        
+        // ChatGPT 답변을 confirm_list.txt에 저장
+        saveConfirmResult(text, chatGPTResponse);
+        
+        responseText = chatGPTResponse;
+      }
+      
+      res.json({
+        success: true,
+        text: text,
+        similarity: analysis.similarity,
+        response: responseText,
+        message: '텍스트 분석이 완료되었습니다.'
+      });
+    } catch (error) {
+      console.error('텍스트 분석 실패:', error);
+      res.status(500).json({
+        success: false,
+        error: '텍스트 분석 중 오류가 발생했습니다.'
       });
     }
   });
