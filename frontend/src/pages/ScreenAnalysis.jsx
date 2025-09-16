@@ -8,6 +8,8 @@ function ScreenAnalysis() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [chatMessage, setChatMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
 
   // 이미지 선택 핸들러
@@ -31,10 +33,11 @@ function ScreenAnalysis() {
   };
 
   // OCR 처리 함수
-  const processImageOCR = async (imageFile) => {
+  const processImageOCR = async (imageFile, userText = '') => {
     try {
       const formData = new FormData();
       formData.append('image', imageFile);
+      formData.append('userText', userText);
       
       const response = await fetch('/api/ocr', {
         method: 'POST',
@@ -49,9 +52,35 @@ function ScreenAnalysis() {
     }
   };
 
+  // 텍스트 분석 함수
+  const processTextAnalysis = async (text) => {
+    try {
+      const response = await fetch('/api/analyze-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text })
+      });
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('텍스트 분석 실패:', error);
+      return { success: false, error: '텍스트 분석 중 오류가 발생했습니다.' };
+    }
+  };
+
   // 채팅 메시지 전송
   const handleSendMessage = async () => {
-    if (chatMessage.trim() || selectedImage) {
+    // 로딩 중이거나 입력이 없으면 전송하지 않음
+    if (isLoading || (!chatMessage.trim() && !selectedImage)) {
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
       const newMessage = {
         id: Date.now(),
         text: chatMessage,
@@ -62,23 +91,33 @@ function ScreenAnalysis() {
       
       setMessages(prev => [...prev, newMessage]);
       
-      // 이미지가 있으면 OCR 처리
-      let ocrResult = null;
+      // 분석 결과를 저장할 변수
+      let analysisResult = null;
+      
+      // 분기처리: 이미지가 있으면 OCR, 텍스트만 있으면 텍스트 분석
       if (selectedImage && fileInputRef.current?.files?.[0]) {
+        // 이미지가 있는 경우 OCR 처리 (사용자 입력 텍스트도 함께 전달)
         const imageFile = fileInputRef.current.files[0];
-        ocrResult = await processImageOCR(imageFile);
+        analysisResult = await processImageOCR(imageFile, chatMessage.trim());
         
-        if (ocrResult.success) {
-          console.log('OCR 결과:', ocrResult.ocrText);
+        if (analysisResult.success) {
+          console.log('OCR 결과:', analysisResult.ocrText);
+        }
+      } else if (chatMessage.trim()) {
+        // 텍스트만 입력된 경우 텍스트 분석
+        analysisResult = await processTextAnalysis(chatMessage.trim());
+        
+        if (analysisResult.success) {
+          console.log('텍스트 분석 결과:', analysisResult.text);
         }
       }
       
-      // AI 응답 (OCR 결과 기반)
+      // AI 응답 (분석 결과 기반)
       setTimeout(() => {
-        let responseText = "에러 이미지를 분석한 결과, 다음과 같은 원인을 예상할 수 있습니다:\n\n1. 네트워크 연결 문제\n2. 서버 응답 지연\n3. 인증 토큰 만료\n\n자세한 해결 방법을 원하시면 추가 정보를 제공해주세요.";
+        let responseText = "자세한 해결 방법을 원하시면 추가 정보를 제공해주세요.";
         
-        if (ocrResult && ocrResult.success && ocrResult.response) {
-          responseText = ocrResult.response;
+        if (analysisResult && analysisResult.success && analysisResult.response) {
+          responseText = analysisResult.response;
         }
         
         const aiResponse = {
@@ -87,7 +126,10 @@ function ScreenAnalysis() {
           timestamp: new Date().toLocaleTimeString(),
           isUser: false
         };
+        
+        // 실제 답변 추가
         setMessages(prev => [...prev, aiResponse]);
+        setIsLoading(false); // 로딩 완료
       }, 1500);
       
       setChatMessage('');
@@ -95,6 +137,9 @@ function ScreenAnalysis() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    } catch (error) {
+      console.error('메시지 전송 실패:', error);
+      setIsLoading(false); // 에러 발생 시에도 로딩 해제
     }
   };
 
@@ -104,6 +149,16 @@ function ScreenAnalysis() {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  // 이미지 클릭 핸들러
+  const handleImageClick = (imageSrc) => {
+    setPreviewImage(imageSrc);
+  };
+
+  // 모달 닫기
+  const closePreview = () => {
+    setPreviewImage(null);
   };
 
   return (
@@ -132,7 +187,12 @@ function ScreenAnalysis() {
               <div key={message.id} className={`chat-message ${message.isUser ? 'user' : 'assistant'}`}>
                 {message.image && (
                   <div className="message-image">
-                    <img src={message.image} alt="에러 이미지" />
+                    <img 
+                      src={message.image} 
+                      alt="에러 이미지" 
+                      onClick={() => handleImageClick(message.image)}
+                      style={{ cursor: 'pointer' }}
+                    />
                   </div>
                 )}
                 <div className="message-content">
@@ -144,6 +204,7 @@ function ScreenAnalysis() {
               </div>
             ))
           )}
+          {isLoading && <div className="chat-message assistant">답변을 생성 중입니다...</div>}
         </div>
 
         <div className="chat-input-area fila-input-area">
@@ -151,7 +212,15 @@ function ScreenAnalysis() {
             <div className="image-preview-container">
               <div className="image-preview">
                 <img src={selectedImage} alt="선택된 이미지" />
-                <button className="remove-image-btn" onClick={removeImage}>
+                <button 
+                  className="remove-image-btn" 
+                  onClick={removeImage}
+                  disabled={isLoading}
+                  style={{ 
+                    opacity: isLoading ? 0.5 : 1, 
+                    cursor: isLoading ? 'not-allowed' : 'pointer' 
+                  }}
+                >
                   ✕
                 </button>
               </div>
@@ -167,8 +236,13 @@ function ScreenAnalysis() {
                 onChange={handleImageSelect}
                 className="file-input-hidden"
                 id="image-upload"
+                disabled={isLoading}
               />
-              <label htmlFor="image-upload" className="image-upload-btn">
+              <label 
+                htmlFor="image-upload" 
+                className={`image-upload-btn ${isLoading ? 'disabled' : ''}`}
+                style={{ opacity: isLoading ? 0.5 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
+              >
                 📷
               </label>
             </div>
@@ -179,16 +253,27 @@ function ScreenAnalysis() {
               placeholder="이미지 첨부 또는 메시지를 입력하세요..."
               className="message-textarea"
               rows="1"
+              disabled={isLoading}
             />
             <button 
               onClick={handleSendMessage}
               className="fila-btn"
-              disabled={!chatMessage.trim() && !selectedImage}
+              disabled={isLoading || (!chatMessage.trim() && !selectedImage)}
             >
-              전송
+              {isLoading ? '처리중...' : '전송'}
             </button>
           </div>
         </div>
+
+        {/* 이미지 미리보기 모달 */}
+        {previewImage && (
+          <div className="image-preview-modal" onClick={closePreview}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="close-btn" onClick={closePreview}>✕</button>
+              <img src={previewImage} alt="미리보기" />
+            </div>
+          </div>
+        )}
     </div>
   );
 }
