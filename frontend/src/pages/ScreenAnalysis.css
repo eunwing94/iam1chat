@@ -6,6 +6,7 @@
 }
 
 .screen-analysis-container {
+  width: 480px;
   max-width: 480px;
   margin: 40px auto;
   border: 2px solid var(--fila-navy);

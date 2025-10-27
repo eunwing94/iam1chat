@@ -56,6 +56,7 @@ body, #root {
 }
 
 .chat-container {
+  width: 480px;
   max-width: 480px;
   margin: 40px auto;
   border: 2px solid var(--fila-navy);
@@ -266,3 +267,174 @@ body, #root {
   background-color: #f5f5f5;
 }
 
+/* 회사 및 문의 업무 선택 화면 스타일 */
+.selection-container {
+  max-width: 480px;
+  margin: 40px auto;
+  border: 2px solid var(--fila-navy);
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  background: var(--fila-white);
+}
+
+.selection-header {
+  background: var(--fila-navy);
+  color: var(--fila-white);
+  padding: 18px;
+  border-radius: 12px 12px 0 0;
+  text-align: center;
+}
+
+.fila-logo-large {
+  height: 36px;
+  width: auto;
+  background: var(--fila-white);
+  border-radius: 8px;
+  padding: 2px 8px;
+  margin-bottom: 12px;
+}
+
+.selection-title {
+  font-size: 1.7rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--fila-white);
+  margin: 0 0 8px 0;
+}
+
+.selection-subtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.selection-content {
+  flex: 1;
+  padding: 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f7f7fa;
+}
+
+.selection-section {
+  background: var(--fila-white);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 32, 91, 0.1);
+  border: 1px solid #e9ecef;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--fila-navy);
+  margin: 0 0 12px 0;
+  text-align: center;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.option-card {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.option-card:hover {
+  border-color: var(--fila-red);
+  background: #fff5f5;
+  box-shadow: 0 4px 12px rgba(227, 28, 36, 0.15);
+}
+
+.option-card.selected {
+  border-color: var(--fila-red);
+  background: #fff5f5;
+  box-shadow: 0 4px 12px rgba(227, 28, 36, 0.2);
+}
+
+.option-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--fila-navy);
+  margin-bottom: 6px;
+}
+
+.option-description {
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+.selection-actions {
+  display: flex;
+  padding: 16px;
+  border-top: 2px solid var(--fila-navy);
+  background: #fafbfc;
+  border-radius: 0 0 12px 12px;
+  margin-top: auto;
+}
+
+.start-chat-btn {
+  background: var(--fila-red);
+  color: var(--fila-white);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(227,28,36,0.08);
+  width: 100%;
+}
+
+.start-chat-btn:hover:not(:disabled) {
+  background: #c41e3a;
+}
+
+.start-chat-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 채팅 화면 헤더 정보 스타일 */
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selection-info {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  transition: opacity 0.2s ease;
+}
+
+.selection-info:hover {
+  opacity: 0.8;
+}
+
+.company-info,
+.inquiry-info {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
