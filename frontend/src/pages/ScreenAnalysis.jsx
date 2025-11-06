@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ScreenAnalysis.css';
+import { getApiUrl } from '../config';
 
 function ScreenAnalysis() {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ function ScreenAnalysis() {
       formData.append('image', imageFile);
       formData.append('userText', userText);
       
-      const response = await fetch('/api/ocr', {
+      const response = await fetch(getApiUrl('/api/ocr'), {
         method: 'POST',
         body: formData
       });
@@ -55,7 +56,7 @@ function ScreenAnalysis() {
   // 텍스트 분석 함수
   const processTextAnalysis = async (text) => {
     try {
-      const response = await fetch('/api/analyze-text', {
+      const response = await fetch(getApiUrl('/api/analyze-text'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

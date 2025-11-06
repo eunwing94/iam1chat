@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ChatManagement.css';
+import { getApiUrl } from '../config';
 
 function ChatManagement() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ function ChatManagement() {
   const fetchChatHistory = async () => {
     setLoadingHistory(true);
     try {
-      const response = await fetch('/api/chat/history?limit=50');
+      const response = await fetch(getApiUrl('/api/chat/history?limit=50'));
       const data = await response.json();
       if (data.success) {
         setChatHistory(data.data);
@@ -41,7 +42,7 @@ function ChatManagement() {
   // 낮은 신뢰도 통계 조회
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/stats/low-confidence');
+      const response = await fetch(getApiUrl('/api/stats/low-confidence'));
       const data = await response.json();
       if (data.success) {
         setStats(data.data);
@@ -109,7 +110,7 @@ function ChatManagement() {
   // 학습된 답변 조회
   const handleViewLearnedAnswers = async (chat) => {
     try {
-      const response = await fetch(`/api/chat/learned-answers/${chat.id}`);
+      const response = await fetch(getApiUrl(`/api/chat/learned-answers/${chat.id}`));
       if (response.ok) {
         const result = await response.json();
         setLearnedAnswers(result.data);
@@ -133,7 +134,7 @@ function ChatManagement() {
 
     setIsLearning(true);
     try {
-      const response = await fetch('/api/chat/learn-answer', {
+      const response = await fetch(getApiUrl('/api/chat/learn-answer'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,7 +192,7 @@ function ChatManagement() {
 
     setIsUpdating(true);
     try {
-      const response = await fetch(`/api/chat/learned-answers/${editingAnswer.id}`, {
+      const response = await fetch(getApiUrl(`/api/chat/learned-answers/${editingAnswer.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

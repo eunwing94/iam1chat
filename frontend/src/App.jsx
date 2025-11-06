@@ -4,6 +4,7 @@ import './App.css';
 import filaLogo from './assets/fila-logo.png';
 import ChatManagement from './pages/ChatManagement';
 import ScreenAnalysis from './pages/ScreenAnalysis';
+import { getApiUrl } from './config';
 
 // 회사 및 문의 업무 선택 컴포넌트
 function CompanySelection() {
@@ -121,7 +122,7 @@ function Chat() {
     setInput('');
     setLoading(true);
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(getApiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input })
@@ -249,7 +250,7 @@ function Chat() {
 // 메인 App 컴포넌트
 function App() {
   return (
-    <Router>
+    <Router basename="/iam1chat">
       <Routes>
         <Route path="/" element={<CompanySelection />} />
         <Route path="/chat" element={<Chat />} />
