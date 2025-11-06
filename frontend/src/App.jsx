@@ -5,6 +5,85 @@ import filaLogo from './assets/fila-logo.png';
 import ChatManagement from './pages/ChatManagement';
 import ScreenAnalysis from './pages/ScreenAnalysis';
 
+// 회사 및 문의 업무 선택 컴포넌트
+function CompanySelection() {
+  const navigate = useNavigate();
+  const [selectedCompany, setSelectedCompany] = useState('');
+
+  const companies = [
+    { id: 'D001', name: 'Misto Holdings', description: 'Misto Holdings' },
+    { id: 'D002', name: 'Misto Korea', description: 'Misto Korea' },
+    { id: 'D007', name: 'Misto Footwear', description: 'Misto Footwear' },
+    { id: 'D011', name: 'Misto Apparel', description: 'Misto Apparel' },
+    { id: 'D025', name: 'Misto Malaysia', description: 'Misto Malaysia' },
+    { id: 'other', name: '기타', description: '기타 시스템 문의' }
+  ];
+
+  // const inquiryTypes = [
+  //   { id: 'technical', name: '기술 문의', description: '시스템 오류, 기능 문의' },
+  //   { id: 'business', name: '업무 문의', description: '프로세스, 업무 관련 문의' },
+  //   { id: 'training', name: '교육 문의', description: '시스템 사용법, 교육 관련' },
+  //   { id: 'general', name: '일반 문의', description: '기타 일반적인 문의' }
+  // ];
+
+  const handleStartChat = () => {
+    if (!selectedCompany) {
+      alert('회사를 선택해주세요.');
+      return;
+    }
+    
+    // 선택한 정보를 세션 스토리지에 저장
+    sessionStorage.setItem('selectedCompany', selectedCompany);
+    
+    // 채팅 화면으로 이동
+    navigate('/chat');
+  };
+
+  return (
+    <div className="chat-container fila-theme">
+      <header className="chat-header fila-header">
+      <div className="header-left">
+          <img src={filaLogo} alt="FILA Logo" className="fila-logo" />
+          <div className="header-info">
+            <span className="fila-title">Mr.FILA</span>
+          </div>
+        </div>
+      </header>
+
+
+
+      <div className="chat-messages">
+        {/* 회사 선택 */}
+        <div className="selection-section">
+          <h2 className="section-title">🏢 회사 선택</h2>
+          <div className="option-grid">
+            {companies.map((company) => (
+              <div 
+                key={company.id}
+                className={`option-card ${selectedCompany === company.id ? 'selected' : ''}`}
+                onClick={() => setSelectedCompany(company.id)}
+              >
+                <div className="option-name">{company.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 시작 버튼 */}
+        <div className="selection-actions">
+          <button 
+            className="start-chat-btn fila-btn"
+            onClick={handleStartChat}
+            disabled={!selectedCompany}
+          >
+            채팅 시작하기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Chat 컴포넌트
 function Chat() {
   const navigate = useNavigate();
@@ -14,6 +93,26 @@ function Chat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+
+  // 선택한 회사 정보 가져오기
+  const selectedCompany = sessionStorage.getItem('selectedCompany');
+  
+  const getCompanyName = (id) => {
+    const companies = { 
+      'D001': 'Misto Holdings', 
+      'D002': 'Misto Korea', 
+      'D007': 'Misto Footwear', 
+      'D011': 'Misto Apparel', 
+      'D025': 'Misto Malaysia', 
+      'other': '기타' 
+    };
+    return companies[id] || '알 수 없음';
+  };
+
+  // 메인 화면으로 이동
+  const goToMain = () => {
+    navigate('/');
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -74,7 +173,14 @@ function Chat() {
       <header className="chat-header fila-header">
         <div className="header-left">
           <img src={filaLogo} alt="FILA Logo" className="fila-logo" />
-          <span className="fila-title">Mr.FILA</span>
+          <div className="header-info">
+            <span className="fila-title">Mr.FILA</span>
+          </div>
+          {selectedCompany && (
+              <div className="selection-info" onClick={goToMain} style={{ cursor: 'pointer' }}>
+                <span className="company-info">🏢 {getCompanyName(selectedCompany)}</span>
+              </div>
+            )}
         </div>
         <div className="header-right">
           <button 
@@ -145,7 +251,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Chat />} />
+        <Route path="/" element={<CompanySelection />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/screen-analysis" element={<ScreenAnalysis />} />
         <Route path="/chat-management" element={<ChatManagement />} />
       </Routes>
