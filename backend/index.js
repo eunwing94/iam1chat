@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { initializeKnowledgeBase, getAnswer } = require('./knowledge.js');
+const { initializeKnowledgeBase, getAnswer, retrainRAG } = require('./knowledge.js');
 const { sendLowConfidenceNotification, isLowConfidence } = require('./teams-notification.js');
 const { setupOCRRoutes } = require('./screen_analysis.js');
 const database = require('./database.js');
@@ -107,10 +107,39 @@ app.get('/api/chat/history', async (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     const chatHistory = await database.getRecentChatHistory(limit);
     
+    // 키워드 추출 추가
+    const { extractAndFormatKeywords } = require('./keyword-extractor');
+    const chatHistoryWithKeywords = chatHistory.map(chat => {
+      // 학습된 답변의 키워드가 있으면 우선 사용, 없으면 자동 추출
+      let keywords = [];
+      let keywordMap = {};
+      
+      if (chat.learnedKeywords && chat.learnedKeywords.length > 0) {
+        // 학습된 답변의 키워드 사용
+        keywords = chat.learnedKeywords;
+        keywordMap = chat.learnedKeywordMap || {};
+        console.log(`✅ 학습된 키워드 사용 - Chat ID: ${chat.id}, Keywords: ${JSON.stringify(keywords)}`);
+      } else {
+        // 학습된 키워드가 없으면 자동 추출
+        const extracted = extractAndFormatKeywords(
+          chat.userQuestion || '',
+          chat.aiAnswer || ''
+        );
+        keywords = extracted.keywords;
+        keywordMap = extracted.keywordMap;
+      }
+      
+      return {
+        ...chat,
+        keywords: keywords,
+        keywordMap: keywordMap
+      };
+    });
+    
     res.json({
       success: true,
-      data: chatHistory,
-      count: chatHistory.length
+      data: chatHistoryWithKeywords,
+      count: chatHistoryWithKeywords.length
     });
   } catch (error) {
     console.error('❌ 채팅 기록 조회 실패:', error);
@@ -139,9 +168,39 @@ app.get('/api/stats/low-confidence', async (req, res) => {
   }
 });
 
+// 키워드 추출 API
+app.post('/api/keywords/extract', async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text || typeof text !== 'string') {
+      return res.json({
+        success: true,
+        keywords: [],
+        keywordMap: {}
+      });
+    }
+    
+    const { extractAndFormatKeywords } = require('./keyword-extractor');
+    const { keywords, keywordMap } = extractAndFormatKeywords(text, '');
+    
+    res.json({
+      success: true,
+      keywords: keywords,
+      keywordMap: keywordMap
+    });
+  } catch (error) {
+    console.error('❌ 키워드 추출 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: '키워드 추출 중 오류가 발생했습니다.'
+    });
+  }
+});
+
 // 답변 학습 API
 app.post('/api/chat/learn-answer', async (req, res) => {
-  const { chatId, correctAnswer } = req.body;
+  const { chatId, correctAnswer, keywords = [], keywordMap = {} } = req.body;
   
   if (!chatId || !correctAnswer) {
     return res.status(400).json({ 
@@ -151,7 +210,7 @@ app.post('/api/chat/learn-answer', async (req, res) => {
   }
 
   try {
-    await database.saveLearnedAnswer(chatId, correctAnswer);
+    await database.saveLearnedAnswer(chatId, correctAnswer, keywords, keywordMap);
     
     res.json({
       success: true,
@@ -275,6 +334,25 @@ app.get('/api/screen-analysis', async (req, res) => {
     res.status(500).json({
       success: false,
       error: '화면 분석 데이터를 불러오는데 실패했습니다.'
+    });
+  }
+});
+
+// RAG 재학습 API (새 문서 추가 후 학습)
+app.post('/api/retrain', async (req, res) => {
+  try {
+    console.log('🔄 RAG 재학습 요청 수신');
+    await retrainRAG();
+    
+    res.json({
+      success: true,
+      message: 'RAG 재학습이 완료되었습니다.'
+    });
+  } catch (error) {
+    console.error('❌ RAG 재학습 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: 'RAG 재학습 중 오류가 발생했습니다.'
     });
   }
 });

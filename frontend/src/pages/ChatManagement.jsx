@@ -19,6 +19,10 @@ function ChatManagement() {
   const [editingAnswer, setEditingAnswer] = useState(null);
   const [editingText, setEditingText] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [learnAnswerKeywords, setLearnAnswerKeywords] = useState([]);
+  const [learnAnswerKeywordMap, setLearnAnswerKeywordMap] = useState({});
+  const [isExtractingKeywords, setIsExtractingKeywords] = useState(false);
+  const [selectedKeywords, setSelectedKeywords] = useState(new Set());
 
   // 채팅 기록 조회
   const fetchChatHistory = async () => {
@@ -140,7 +144,14 @@ function ChatManagement() {
         },
         body: JSON.stringify({
           chatId: selectedChat.id,
-          correctAnswer: learnAnswer.trim()
+          correctAnswer: learnAnswer.trim(),
+          keywords: Array.from(selectedKeywords), // 선택된 키워드만 저장
+          keywordMap: Object.fromEntries(
+            Array.from(selectedKeywords).map(keyword => [
+              keyword,
+              learnAnswerKeywordMap[keyword] || `#${keyword.toLowerCase().replace(/\s+/g, '_')}`
+            ])
+          )
         }),
       });
 
@@ -149,6 +160,9 @@ function ChatManagement() {
         setShowLearnPopup(false);
         setSelectedChat(null);
         setLearnAnswer('');
+        setLearnAnswerKeywords([]);
+        setLearnAnswerKeywordMap({});
+        setSelectedKeywords(new Set());
         // 채팅 기록 새로고침
         fetchChatHistory();
       } else {
@@ -168,6 +182,76 @@ function ChatManagement() {
     setShowLearnPopup(false);
     setSelectedChat(null);
     setLearnAnswer('');
+    setLearnAnswerKeywords([]);
+    setLearnAnswerKeywordMap({});
+    setSelectedKeywords(new Set());
+  };
+
+  // 키워드 추출 (debounce 적용)
+  const extractKeywordsDebounced = useCallback(
+    (() => {
+      let timeoutId = null;
+      return (text) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        
+        if (!text || text.trim().length === 0) {
+          setLearnAnswerKeywords([]);
+          setLearnAnswerKeywordMap({});
+          setSelectedKeywords(new Set());
+          return;
+        }
+        
+        timeoutId = setTimeout(async () => {
+          setIsExtractingKeywords(true);
+          try {
+            const response = await fetch('/api/keywords/extract', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ text }),
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success) {
+                setLearnAnswerKeywords(data.keywords || []);
+                setLearnAnswerKeywordMap(data.keywordMap || {});
+                // 새로 추출된 키워드는 선택 해제 상태로 시작
+                setSelectedKeywords(new Set());
+              }
+            }
+          } catch (error) {
+            console.error('키워드 추출 실패:', error);
+          } finally {
+            setIsExtractingKeywords(false);
+          }
+        }, 500); // 500ms debounce
+      };
+    })(),
+    []
+  );
+
+  // 키워드 선택/해제 핸들러
+  const handleKeywordToggle = (keyword) => {
+    setSelectedKeywords(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(keyword)) {
+        newSet.delete(keyword);
+      } else {
+        newSet.add(keyword);
+      }
+      return newSet;
+    });
+  };
+
+  // 답변 입력 핸들러
+  const handleLearnAnswerChange = (e) => {
+    const value = e.target.value;
+    setLearnAnswer(value);
+    extractKeywordsDebounced(value);
   };
 
   // 답변 수정 시작
@@ -332,6 +416,23 @@ function ChatManagement() {
                       <strong>답변:</strong> {chat.aiAnswer.length > 150 ? 
                         `${chat.aiAnswer.substring(0, 150)}...` : chat.aiAnswer}
                     </div>
+                    {chat.keywords && chat.keywords.length > 0 && (chat.confidence > 60 || chat.learnedStatus === 'learned') && (
+                      <div className="history-keywords">
+                        <strong>키워드:</strong>
+                        <div className="keywords-tags">
+                          {chat.keywords.map((keyword, index) => {
+                            const tag = chat.keywordMap && chat.keywordMap[keyword] 
+                              ? chat.keywordMap[keyword] 
+                              : `#${keyword.toLowerCase().replace(/\s+/g, '_')}`;
+                            return (
+                              <span key={index} className="keyword-tag" title={keyword}>
+                                {tag}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     {chat.sourcesCount > 0 && (
                       <div className="history-sources">
                         <strong>참조 문서:</strong> {chat.sourcesCount}개
@@ -414,11 +515,43 @@ function ChatManagement() {
                   <textarea
                     className="learn-answer-input"
                     value={learnAnswer}
-                    onChange={(e) => setLearnAnswer(e.target.value)}
+                    onChange={handleLearnAnswerChange}
                     placeholder="AI가 제공한 답변보다 정확하고 상세한 답변을 입력해주세요..."
                     rows={6}
                     disabled={isLearning}
                   />
+                  {learnAnswerKeywords && learnAnswerKeywords.length > 0 && (
+                    <div className="learn-answer-keywords">
+                      <strong>키워드 (클릭하여 선택):</strong>
+                      <div className="keywords-tags">
+                        {learnAnswerKeywords.map((keyword, index) => {
+                          const tag = learnAnswerKeywordMap[keyword] 
+                            ? learnAnswerKeywordMap[keyword] 
+                            : `#${keyword.toLowerCase().replace(/\s+/g, '_')}`;
+                          const isSelected = selectedKeywords.has(keyword);
+                          return (
+                            <span 
+                              key={index} 
+                              className={`keyword-tag ${isSelected ? 'selected' : ''}`}
+                              title={keyword}
+                              onClick={() => handleKeywordToggle(keyword)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              {tag}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      {selectedKeywords.size > 0 && (
+                        <div className="selected-keywords-info">
+                          {selectedKeywords.size}개 키워드 선택됨
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {isExtractingKeywords && (
+                    <div className="keywords-loading">키워드 추출 중...</div>
+                  )}
                 </div>
                 <div className="learn-popup-actions">
                   <button 
@@ -502,6 +635,23 @@ function ChatManagement() {
                           />
                         ) : (
                           <div className="answer-content">{answer.answer}</div>
+                        )}
+                        {answer.keywords && answer.keywords.length > 0 && (
+                          <div className="learned-answer-keywords">
+                            <strong>키워드:</strong>
+                            <div className="keywords-tags">
+                              {answer.keywords.map((keyword, idx) => {
+                                const tag = answer.keywordMap && answer.keywordMap[keyword] 
+                                  ? answer.keywordMap[keyword] 
+                                  : `#${keyword.toLowerCase().replace(/\s+/g, '_')}`;
+                                return (
+                                  <span key={idx} className="keyword-tag" title={keyword}>
+                                    {tag}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
                         )}
                       </div>
                     ))

@@ -218,6 +218,7 @@
 
 .history-question,
 .history-answer,
+.history-keywords,
 .history-sources,
 .history-session {
   margin-bottom: 6px;
@@ -227,6 +228,7 @@
 
 .history-question strong,
 .history-answer strong,
+.history-keywords strong,
 .history-sources strong,
 .history-session strong {
   color: var(--fila-navy);
@@ -238,6 +240,61 @@
   padding: 8px;
   border-radius: 4px;
   border-left: 3px solid var(--fila-red);
+}
+
+.history-keywords {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+}
+
+.history-keywords strong {
+  color: var(--fila-navy);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.keywords-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.keyword-tag {
+  background: #e8e8e8;
+  color: #555;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: default;
+  transition: all 0.2s;
+  border: 1px solid #d0d0d0;
+}
+
+.keyword-tag:hover {
+  background: #d8d8d8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.keyword-tag.selected {
+  background: var(--fila-navy);
+  color: var(--fila-white);
+  border-color: var(--fila-navy);
+}
+
+.keyword-tag.selected:hover {
+  background: #001a4a;
+}
+
+.selected-keywords-info {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--fila-navy);
+  font-weight: 500;
 }
 
 .history-sources {
@@ -586,6 +643,34 @@
   cursor: not-allowed;
 }
 
+.learn-answer-keywords {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e9ecef;
+}
+
+.learn-answer-keywords strong {
+  color: var(--fila-navy);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.learn-answer-keywords .keywords-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.keywords-loading {
+  margin-top: 8px;
+  color: #6c757d;
+  font-size: 12px;
+  font-style: italic;
+}
+
 .learn-popup-actions {
   display: flex;
   gap: 12px;
@@ -738,6 +823,27 @@
   color: #6c757d;
   font-style: italic;
   padding: 20px;
+}
+
+.learned-answer-item .learned-answer-keywords {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e9ecef;
+}
+
+.learned-answer-item .learned-answer-keywords strong {
+  color: var(--fila-navy);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.learned-answer-item .learned-answer-keywords .keywords-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 .learned-answer-item {
