@@ -2,7 +2,9 @@ const axios = require('axios');
 const { analyzeQuestionAndGetAssignee } = require('./category-analyzer.js');
 
 // Teams 웹훅 URL
-const TEAMS_WEBHOOK_URL = 'https://cjworld.webhook.office.com/webhookb2/c72d7f0c-1ac2-4357-b895-1c43ab980d11@ee6af5c5-684f-4539-9eb6-64793af08027/IncomingWebhook/d176c2c4b8f742df86154a2cea0a06fc/5288bc35-2d21-4ca3-8965-fdf835a35efd/V248ms2JrtHdItpZIi2KmwZ0qqrxt0Qf6RAZz7-XXt9H01';
+const TEAMS_WEBHOOK_URL = 'https://cjworld.webhook.office.com/webhookb2/a28f7caf-538d-43c5-bc57-3601f91eee1e@ee6af5c5-684f-4539-9eb6-64793af08027/IncomingWebhook/a964e3379feb4c319e0e560aa0e0d3e7/5288bc35-2d21-4ca3-8965-fdf835a35efd/V2eDBbq-SSApEbF3nMOAEZNnEZd3f7HKWvPnovVq93xCE1'
+  
+//'https://cjworld.webhook.office.com/webhookb2/c72d7f0c-1ac2-4357-b895-1c43ab980d11@ee6af5c5-684f-4539-9eb6-64793af08027/IncomingWebhook/d176c2c4b8f742df86154a2cea0a06fc/5288bc35-2d21-4ca3-8965-fdf835a35efd/V248ms2JrtHdItpZIi2KmwZ0qqrxt0Qf6RAZz7-XXt9H01';
 
 /**
  * 신뢰도가 낮은 답변에 대해 Teams로 알림을 보냅니다
