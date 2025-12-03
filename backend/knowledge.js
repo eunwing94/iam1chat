@@ -1,15 +1,14 @@
-const { DirectoryLoader } = require("langchain/document_loaders/fs/directory");
-const { TextLoader } = require("langchain/document_loaders/fs/text");
 const { PDFLoader } = require("@langchain/community/document_loaders/fs/pdf");
 const { DocxLoader } = require("@langchain/community/document_loaders/fs/docx");
 const { OpenAIEmbeddings, ChatOpenAI } = require("@langchain/openai");
-const { MemoryVectorStore } = require("langchain/vectorstores/memory");
-const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
-const { createRetrievalChain } = require("langchain/chains/retrieval");
-const { createHistoryAwareRetriever } = require("langchain/chains/history_aware_retriever");
+const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
+const { createRetrievalChain } = require("@langchain/classic/chains/retrieval");
+const { createHistoryAwareRetriever } = require("@langchain/classic/chains/history_aware_retriever");
 const { MessagesPlaceholder } = require("@langchain/core/prompts");
 const { ChatPromptTemplate } = require("@langchain/core/prompts");
-const { createStuffDocumentsChain } = require("langchain/chains/combine_documents");
+const { createStuffDocumentsChain } = require("@langchain/classic/chains/combine_documents");
+const { Document } = require("@langchain/core/documents");
+const { MemoryVectorStore } = require("@langchain/classic/vectorstores/memory");
 const { calculateConfidence } = require('./confidence.js');
 const fs = require('fs');
 const path = require('path');
@@ -47,7 +46,15 @@ async function initializeKnowledgeBase() {
             } else if (file.endsWith('.docx')) {
               loader = new DocxLoader(filePath);
             } else if (file.endsWith('.txt')) {
-              loader = new TextLoader(filePath);
+              // TextLoader를 직접 구현 (langchain v1.x에서는 제공되지 않음)
+              const textContent = fs.readFileSync(filePath, 'utf-8');
+              const doc = new Document({
+                pageContent: textContent,
+                metadata: { source: filePath }
+              });
+              allDocs.push(doc);
+              console.log(`✅ ${file} 파일 로드 완료 (1개 문서)`);
+              continue;
             } else {
               continue; // 지원하지 않는 파일 형식
             }
