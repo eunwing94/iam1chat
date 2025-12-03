@@ -1,7 +1,7 @@
 const { DirectoryLoader } = require("langchain/document_loaders/fs/directory");
 const { TextLoader } = require("langchain/document_loaders/fs/text");
-const { PDFLoader } = require("langchain/document_loaders/fs/pdf");
-const { DocxLoader } = require("langchain/document_loaders/fs/docx");
+const { PDFLoader } = require("@langchain/community/document_loaders/fs/pdf");
+const { DocxLoader } = require("@langchain/community/document_loaders/fs/docx");
 const { OpenAIEmbeddings, ChatOpenAI } = require("@langchain/openai");
 const { MemoryVectorStore } = require("langchain/vectorstores/memory");
 const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
