@@ -25,6 +25,10 @@
     "pdf-parse": "^1.1.1",
     "sqlite3": "^5.1.7",
     "string-similarity": "^4.0.4",
-    "tesseract.js": "^6.0.1"
+    "tesseract.js": "^6.0.1",
+    "@langchain/community": "^0.3.49",
+    "@langchain/core": "^0.3.75",
+    "keyword-extractor-korean": "^0.3.2",
+    "pdfkit": "^0.17.2"
   }
 }

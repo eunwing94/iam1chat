@@ -11,6 +11,8 @@ const { MessagesPlaceholder } = require("@langchain/core/prompts");
 const { ChatPromptTemplate } = require("@langchain/core/prompts");
 const { createStuffDocumentsChain } = require("langchain/chains/combine_documents");
 const { calculateConfidence } = require('./confidence.js');
+const fs = require('fs');
+const path = require('path');
 
 let retrievalChain;
 let chatHistory = [];
@@ -18,21 +20,57 @@ let isRetraining = false;
 
 async function initializeKnowledgeBase() {
   try {
-    const loader = new DirectoryLoader(
-      "./manuals",
-      {
-        ".pdf": (path) => new PDFLoader(path, { splitPages: false }),
-        ".docx": (path) => new DocxLoader(path),
-        ".txt": (path) => new TextLoader(path),
-      },
-      true // recursive
-    );
-    const docs = await loader.load();
+    // 개별 파일을 로드하고 에러를 처리하는 방식으로 변경
+    const allDocs = [];
+    const manualsPath = path.join(__dirname, "manuals");
+    
+    async function loadFilesRecursively(dir) {
+      const files = fs.readdirSync(dir);
+      
+      for (const file of files) {
+        // 임시 파일(~$) 건너뛰기
+        if (file.startsWith('~$')) {
+          continue;
+        }
+        
+        const filePath = path.join(dir, file);
+        const stats = fs.statSync(filePath);
+        
+        if (stats.isDirectory()) {
+          await loadFilesRecursively(filePath);
+        } else if (stats.isFile()) {
+          try {
+            let loader;
+            
+            if (file.endsWith('.pdf')) {
+              loader = new PDFLoader(filePath, { splitPages: false });
+            } else if (file.endsWith('.docx')) {
+              loader = new DocxLoader(filePath);
+            } else if (file.endsWith('.txt')) {
+              loader = new TextLoader(filePath);
+            } else {
+              continue; // 지원하지 않는 파일 형식
+            }
+            
+            const fileDocs = await loader.load();
+            allDocs.push(...fileDocs);
+            console.log(`✅ ${file} 파일 로드 완료 (${fileDocs.length}개 문서)`);
+          } catch (error) {
+            console.warn(`⚠️ ${file} 파일 로드 실패: ${error.message}`);
+            // 개별 파일 에러는 건너뛰고 계속 진행
+          }
+        }
+      }
+    }
+    
+    await loadFilesRecursively(manualsPath);
 
-    if (docs.length === 0) {
+    if (allDocs.length === 0) {
       console.log("학습할 문서가 manuals 폴더에 없습니다.");
       return;
     }
+    
+    const docs = allDocs;
 
     const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
     const splitDocs = await textSplitter.splitDocuments(docs);
