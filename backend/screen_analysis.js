@@ -5,6 +5,7 @@ const path = require('path');
 const { createWorker } = require('tesseract.js');
 const stringSimilarity = require('string-similarity');
 const OpenAI = require('openai');
+const database = require('./database.js');
 
 // multer 설정 (메모리 저장)
 const upload = multer({ storage: multer.memoryStorage() });
@@ -126,8 +127,46 @@ function parseGuideFile() {
   }
 }
 
+// QNA 파일에서 질문-답변 정보를 파싱하는 함수
+function parseQNAFile() {
+  const qnaFilePath = path.join(__dirname, 'manuals', 'qna.txt');
+  try {
+    const content = fs.readFileSync(qnaFilePath, 'utf8');
+    const entries = [];
+    
+    // ## Q: 로 시작하는 질문 블록들을 찾아서 파싱
+    const qnaBlocks = content.split(/##\s*Q:/).filter(block => block.trim() && !block.startsWith('#'));
+    
+    qnaBlocks.forEach(block => {
+      // A: 이전까지가 질문, A: 이후가 답변
+      const answerMatch = block.match(/A:\s*(.+?)(?=\n##\s*Q:|$)/s);
+      const questionMatch = block.match(/^(.+?)(?=\nA:)/s);
+      
+      if (questionMatch && answerMatch) {
+        const question = questionMatch[1].trim();
+        const answer = answerMatch[1].trim();
+        
+        if (question && answer) {
+          entries.push({
+            title: question.substring(0, 50) + (question.length > 50 ? '...' : ''),
+            content: question,
+            answer: answer,
+            type: 'qna' // guide와 구분하기 위한 타입
+          });
+        }
+      }
+    });
+    
+    return entries;
+  } catch (error) {
+    console.error('QNA 파일 읽기 실패:', error);
+    return [];
+  }
+}
+
 // 유사도 기반 에러 분석 함수
 function analyzeErrorWithGuide(ocrContent) {
+  // 1. 먼저 guide.txt에서 찾기
   const guideEntries = parseGuideFile();
   let bestMatch = null;
   let bestSimilarity = 0;
@@ -140,10 +179,64 @@ function analyzeErrorWithGuide(ocrContent) {
     }
   });
   
+  // 2. guide.txt에서 70% 이상 매칭이 없으면 qna.txt에서도 찾기
+  if (bestSimilarity < 0.7) {
+    const qnaEntries = parseQNAFile();
+    let qnaBestMatch = null;
+    let qnaBestSimilarity = 0;
+    
+    qnaEntries.forEach(entry => {
+      const similarity = stringSimilarity.compareTwoStrings(ocrContent, entry.content);
+      if (similarity > qnaBestSimilarity) {
+        qnaBestSimilarity = similarity;
+        qnaBestMatch = entry;
+      }
+    });
+    
+    // qna.txt에서 더 높은 유사도를 찾았으면 그것을 사용
+    if (qnaBestSimilarity > bestSimilarity) {
+      bestSimilarity = qnaBestSimilarity;
+      bestMatch = qnaBestMatch;
+      console.log(`QNA에서 더 높은 유사도 발견: ${(qnaBestSimilarity * 100).toFixed(2)}%`);
+    }
+  }
+  
   return {
     match: bestMatch,
     similarity: bestSimilarity
   };
+}
+
+// 신뢰도 레벨 분류 함수
+function getConfidenceLevel(confidence) {
+  if (confidence >= 80) return '매우 높음';
+  if (confidence >= 60) return '높음';
+  if (confidence >= 40) return '보통';
+  if (confidence >= 20) return '낮음';
+  return '매우 낮음';
+}
+
+// 화면 분석 결과를 chat_history에 저장하는 함수
+async function saveScreenAnalysisToHistory(userQuestion, aiAnswer, similarity) {
+  try {
+    // 유사도를 신뢰도 점수로 변환 (0-100)
+    const confidence = Math.round(similarity * 100);
+    const confidenceLevel = getConfidenceLevel(confidence);
+    const sessionId = 'screen-analysis';
+    
+    await database.saveChatHistory(
+      sessionId,
+      userQuestion,
+      aiAnswer,
+      confidence,
+      confidenceLevel,
+      [] // sources는 없음
+    );
+    
+    console.log('화면 분석 결과가 chat_history에 저장되었습니다.');
+  } catch (error) {
+    console.error('chat_history 저장 실패:', error);
+  }
 }
 
 // ChatGPT API 호출 함수
@@ -216,21 +309,27 @@ function setupOCRRoutes(app) {
         let responseText = '';
         
         if (analysis.similarity >= 0.7 && analysis.match) {
-          // 70% 이상 유사한 경우 가이드에서 답변
-          let causeText = '';
-          let solutionText = '';
-          
-          if (analysis.match.cause && analysis.match.cause.trim()) {
-            causeText = `예상 원인 : ${analysis.match.cause}`;
-          }
-          
-          if (analysis.match.solution && analysis.match.solution.trim()) {
-            solutionText = `해결방법: ${analysis.match.solution}`;
-          }
-          
-          responseText = `에러 이미지를 분석한 결과, 다음과 같은 원인을 예상할 수 있습니다:
+          // 70% 이상 유사한 경우 가이드 또는 QNA에서 답변
+          if (analysis.match.type === 'qna') {
+            // QNA에서 찾은 경우
+            responseText = analysis.match.answer;
+          } else {
+            // guide.txt에서 찾은 경우
+            let causeText = '';
+            let solutionText = '';
+            
+            if (analysis.match.cause && analysis.match.cause.trim()) {
+              causeText = `예상 원인 : ${analysis.match.cause}`;
+            }
+            
+            if (analysis.match.solution && analysis.match.solution.trim()) {
+              solutionText = `해결방법: ${analysis.match.solution}`;
+            }
+            
+            responseText = `에러 이미지를 분석한 결과, 다음과 같은 원인을 예상할 수 있습니다:
 
 ${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}`;
+          }
         } else {
           // 70% 미만인 경우 ChatGPT 답변
           console.log('유사도가 70% 미만이므로 ChatGPT 분석을 진행합니다.');
@@ -241,6 +340,10 @@ ${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}`;
           
           responseText = chatGPTResponse;
         }
+        
+        // chat_history에 저장
+        const userQuestion = userText.trim() || content || '이미지 분석 요청';
+        await saveScreenAnalysisToHistory(userQuestion, responseText, analysis.similarity);
         
         res.json({
           success: true,
@@ -253,6 +356,10 @@ ${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}`;
       } else {
         // OCR로 텍스트를 추출할 수 없는 경우
         const noTextResponse = '이미지를 인식할 수 없습니다. 이미지를 확인 후 첨부해주세요.';
+        
+        // chat_history에 저장 (유사도 0)
+        const userQuestion = userText.trim() || '이미지 분석 요청 (텍스트 추출 실패)';
+        await saveScreenAnalysisToHistory(userQuestion, noTextResponse, 0);
         
         res.json({
           success: true,
@@ -299,23 +406,29 @@ ${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}`;
       let responseText = '';
       
       if (analysis.similarity >= 0.7 && analysis.match) {
-        // 70% 이상 유사한 경우 가이드에서 답변
-        let causeText = '';
-        let solutionText = '';
-        
-        if (analysis.match.cause && analysis.match.cause.trim()) {
-          causeText = `예상 원인 : ${analysis.match.cause}`;
-        }
-        
-        if (analysis.match.solution && analysis.match.solution.trim()) {
-          solutionText = `해결방법: ${analysis.match.solution}`;
-        }
-        
-        responseText = `에러 내용을 분석한 결과, 다음과 같은 원인을 예상할 수 있습니다:
+        // 70% 이상 유사한 경우 가이드 또는 QNA에서 답변
+        if (analysis.match.type === 'qna') {
+          // QNA에서 찾은 경우
+          responseText = analysis.match.answer;
+        } else {
+          // guide.txt에서 찾은 경우
+          let causeText = '';
+          let solutionText = '';
+          
+          if (analysis.match.cause && analysis.match.cause.trim()) {
+            causeText = `예상 원인 : ${analysis.match.cause}`;
+          }
+          
+          if (analysis.match.solution && analysis.match.solution.trim()) {
+            solutionText = `해결방법: ${analysis.match.solution}`;
+          }
+          
+          responseText = `에러 내용을 분석한 결과, 다음과 같은 원인을 예상할 수 있습니다:
 
 ${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}
 
 자세한 해결 방법을 원하시면 추가 정보를 제공해주세요.`;
+        }
       } else {
         // 70% 미만인 경우 ChatGPT 답변
         console.log('유사도가 70% 미만이므로 ChatGPT 분석을 진행합니다.');
@@ -326,6 +439,9 @@ ${causeText}${causeText && solutionText ? '\n' : ''}${solutionText}
         
         responseText = chatGPTResponse;
       }
+      
+      // chat_history에 저장
+      await saveScreenAnalysisToHistory(text, responseText, analysis.similarity);
       
       res.json({
         success: true,

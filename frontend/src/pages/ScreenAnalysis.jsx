@@ -167,7 +167,7 @@ function ScreenAnalysis() {
         <div className="header-content">
           <button 
             className="back-btn"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/chat')}
           >
             ← 뒤로가기
           </button>
@@ -250,7 +250,7 @@ function ScreenAnalysis() {
               value={chatMessage}
               onChange={(e) => setChatMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="이미지 첨부 또는 메시지를 입력하세요..."
+              placeholder="이미지 또는 메시지를 입력하세요..."
               className="message-textarea"
               rows="1"
               disabled={isLoading}

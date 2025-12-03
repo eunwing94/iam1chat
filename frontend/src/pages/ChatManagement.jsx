@@ -329,7 +329,7 @@ function ChatManagement() {
         <div className="header-content">
           <button 
             className="back-btn"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/chat')}
           >
             ← 뒤로가기
           </button>
