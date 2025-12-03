@@ -18,7 +18,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
-    "langchain": "^0.1.0",
+    "langchain": "^0.3.30",
     "mammoth": "^1.9.1",
     "multer": "^2.0.2",
     "openai": "^5.20.2",
